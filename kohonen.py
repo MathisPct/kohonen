@@ -283,20 +283,20 @@ if __name__ == '__main__':
     network = SOM((2, 1), (10, 10))
     # PARAMÈTRES DU RÉSEAU
     # Taux d'apprentissage
-    ETA = 0.05
+    ETA = 0.05 # Par défaut à 0.05
     # Largeur du voisinage
-    SIGMA = 1.4 # Pär défaut à 1.4
+    SIGMA = 1.4 # Par défaut à 1.4
     # Nombre de pas de temps d'apprentissage
-    N = 30000
+    N = 30000 # Par défaut à 30000
     # Affichage interactif de l'évolution du réseau
     # TODO à mettre à faux pour que les simulations aillent plus vite
     VERBOSE = True
     # Nombre de pas de temps avant rafraissichement de l'affichage
-    NAFFICHAGE = 1000
+    NAFFICHAGE = 1000 # Par défaut à 1000
     # DONNÉES D'APPRENTISSAGE
     # Nombre de données à générer pour les ensembles 1, 2 et 3
     # TODO décommenter les données souhaitées
-    nsamples = 1200
+    nsamples = 1200 # Par défaut à 1200
     # Ensemble de données 1
     samples = numpy.random.random((nsamples, 2, 1)) * 2 - 1
     # Ensemble de données 2
