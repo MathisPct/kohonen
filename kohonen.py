@@ -297,43 +297,76 @@ if __name__ == '__main__':
     # Nombre de données à générer pour les ensembles 1, 2 et 3
     # TODO décommenter les données souhaitées
     nsamples = 1200 # Par défaut à 1200
+
     # Ensemble de données 1
-    samples = numpy.random.random((nsamples, 2, 1)) * 2 - 1
+    # samples = numpy.random.random((nsamples, 2, 1)) * 2 - 1
+
     # Ensemble de données 2
-    #  samples1 = -numpy.random.random((nsamples//3,2,1))
-    #  samples2 = numpy.random.random((nsamples//3,2,1))
-    #  samples2[:,0,:] -= 1
-    #  samples3 = numpy.random.random((nsamples//3,2,1))
-    #  samples3[:,1,:] -= 1
-    #  samples = numpy.concatenate((samples1,samples2,samples3))
+    # samples1 = -numpy.random.random((nsamples//3,2,1))
+    # samples2 = numpy.random.random((nsamples//3,2,1))
+    # samples2[:,0,:] -= 1
+    # samples3 = numpy.random.random((nsamples//3,2,1))
+    # samples3[:,1,:] -= 1
+    # samples = numpy.concatenate((samples1,samples2,samples3))
+
     # Ensemble de données 3
-    #  samples1 = numpy.random.random((nsamples//2,2,1))
-    #  samples1[:,0,:] -= 1
-    #  samples2 = numpy.random.random((nsamples//2,2,1))
-    #  samples2[:,1,:] -= 1
-    #  samples = numpy.concatenate((samples1,samples2))
+    # samples1 = numpy.random.random((nsamples//2,2,1))
+    # samples1[:,0,:] -= 1
+    # samples2 = numpy.random.random((nsamples//2,2,1))
+    # samples2[:,1,:] -= 1
+    # samples = numpy.concatenate((samples1,samples2))
+
+    # Ensemble de données 4
+    # samples1 = numpy.random.random((nsamples//4,2,1))
+    # samples1[:,0] -= 1
+    # samples1[:,1] *= 2
+    # samples1[:,1] -= 1
+    # samples2 = numpy.random.random((nsamples//4*1,2,1))
+    # samples2[:,1] *= 2
+    # samples2[:,1] -= 1
+    # samples = numpy.concatenate((samples1,samples2))
+
+    # Ensemble de données 5
+    # samples1 = numpy.random.random((nsamples//8,2,1))
+    # samples1[:,0] -= 1
+    # samples1[:,1] *= 2
+    # samples1[:,1] -= 1
+    # samples2 = numpy.random.random((nsamples//8*7,2,1))
+    # samples2[:,1] *= 2
+    # samples2[:,1] -= 1
+    # samples = numpy.concatenate((samples1,samples2))
+
+    # Ensemble de données 6
+    # samples1 = numpy.random.random((nsamples//4,2,1))*2-1
+    # samples2 = numpy.random.random((nsamples//4*3,2,1))
+    # samples = numpy.concatenate((samples1,samples2))
+
     # Ensemble de données robotiques
-    #  samples = numpy.random.random((nsamples,4,1))
-    #  samples[:,0:2,:] *= numpy.pi
-    #  l1 = 0.7
-    #  l2 = 0.3
-    #  samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
-    #  samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
+    samples = numpy.random.random((nsamples,4,1))
+    samples[:,0:2,:] *= numpy.pi
+    l1 = 0.7
+    l2 = 0.3
+    samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
+    samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
+
+
+
     # Affichage des données (pour les ensembles 1, 2 et 3)
+    # plt.figure()
+    # plt.scatter(samples[:, 0, 0], samples[:, 1, 0])
+    # plt.xlim(-1, 1)
+    # plt.ylim(-1, 1)
+    # plt.suptitle('Donnees apprentissage')
+    # plt.show()
+
+    # Affichage des données (pour l'ensemble robotique)
     plt.figure()
-    plt.scatter(samples[:, 0, 0], samples[:, 1, 0])
-    plt.xlim(-1, 1)
-    plt.ylim(-1, 1)
+    plt.subplot(1,2,1)
+    plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='k')
+    plt.subplot(1,2,2)
+    plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='k')
     plt.suptitle('Donnees apprentissage')
     plt.show()
-    # Affichage des données (pour l'ensemble robotique)
-    #  plt.figure()
-    #  plt.subplot(1,2,1)
-    #  plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='k')
-    #  plt.subplot(1,2,2)
-    #  plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='k')
-    #  plt.suptitle('Donnees apprentissage')
-    #  plt.show()
 
     # SIMULATION
     # Affichage des poids du réseau
