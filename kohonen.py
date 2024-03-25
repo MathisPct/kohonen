@@ -241,15 +241,15 @@ class SOM:
         # On renvoie l'erreur de quantification vectorielle moyenne
         return s / nsamples
 
-    def getMapDispertion(self):
+    def get_map_dispertion(self):
         distanceTotal = 0
         for i in range(0, len(self.map)):
             for j in range(0, len(self.map[i])):
-                distanceTotal += self.getDistanceWithNeighboor(i, j)
+                distanceTotal += self.get_distance_with_neighbor(i, j)
 
         return distanceTotal
 
-    def getDistanceWithNeighboor(self, posx, posy):
+    def get_distance_with_neighbor(self, posx, posy):
         distance = 0
         if (posx != 0):
             #  distance+=abs(self.map[posx-1][posy].posx-self.map[posx][posy].posx)**2+abs(self.map[posx-1][posy].posy-self.map[posx][posy].posy)**2
@@ -270,6 +270,45 @@ class SOM:
             distance += abs(self.map[posx][posy].weights[0] - self.map[posx][posy + 1].weights[0]) ** 2 + abs(
                 self.map[posx][posy].weights[1] - self.map[posx][posy + 1].weights[1]) ** 2
         return distance
+    
+    def find_hand_position_v1(self,map, motrice_position):
+        closest_value=abs(map[0][0]-motrice_position[0])+abs(map[0][1]-motrice_position[1])
+        closest_index=0
+
+        for index in range(1, len(map)):
+            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_value:
+                closest_value=abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])
+                closest_index=index
+
+        print(f"Index du plus proche {closest_index}, postion du plus proche {map[closest_index][0]}:{map[closest_index][1]}")
+        return (map[closest_index][2],map[closest_index][3])
+
+    def find_hand_position_v2(self,map, motrice_position):
+        nb_values=5 #nombre de neuronnes prise en compte
+        closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(5)] #tableau de (index, distance)
+
+        closest_values.sort(key=lambda x: x[1])
+
+        for index in range(nb_values, len(map)):
+            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_values[4][1]:
+                closest_values[4]=(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1]))
+                closest_values.sort(key=lambda x: x[1])
+
+        print('Liste des neuronnes les plus proches')
+        for i in range(5):
+            print(f"Indice: {closest_values[i][0]}; Coordonées: {map[closest_values[i][0]][0]}:{map[closest_values[i][0]][1]}; Distance: {closest_values[i][1]}")
+
+        x=0
+        y=0
+
+        for index in range(5):
+            x+=map[index][2]
+            y+=map[index][3]
+
+        x/=5
+        y/=5
+
+        return (x,y)
 
 
 # -----------------------------------------------------------------------------
@@ -349,7 +388,15 @@ if __name__ == '__main__':
     samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
     samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
 
+    motrice_test_position=(2,2)
 
+    print(f"Position idéale: {l1*numpy.cos(motrice_test_position[0])+l2*numpy.cos(motrice_test_position[0]+motrice_test_position[1])}:{l1*numpy.sin(motrice_test_position[0])+l2*numpy.sin(motrice_test_position[0]+motrice_test_position[1])}")
+    
+    result=network.find_hand_position_v1(samples,motrice_test_position)
+    print(f"Position calculé: {result[0]}:{result[1]}")
+
+    result2=network.find_hand_position_v2(samples,motrice_test_position)
+    print(f"Position calculé 2: {result2[0]}:{result2[1]}")
 
     # Affichage des données (pour les ensembles 1, 2 et 3)
     # plt.figure()
@@ -407,5 +454,4 @@ if __name__ == '__main__':
     network.plot()
     # Affichage de l'erreur de quantification vectorielle moyenne après apprentissage
     print("erreur de quantification vectorielle moyenne ", network.MSE(samples))
-    print("coef de relachement ", network.getMapDispertion())
-
+    print("coef de relachement ", network.get_map_dispertion())
