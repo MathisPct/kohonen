@@ -279,36 +279,63 @@ class SOM:
             if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_value:
                 closest_value=abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])
                 closest_index=index
-
-        print(f"Index du plus proche {closest_index}, postion du plus proche {map[closest_index][0]}:{map[closest_index][1]}")
+        # print(f"Plus proche: {map[closest_index][0]}:{map[closest_index][1]}")
         return (map[closest_index][2],map[closest_index][3])
 
-    def find_hand_position_v2(self,map, motrice_position):
-        nb_values=5 #nombre de neuronnes prise en compte
-        closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(5)] #tableau de (index, distance)
+    def find_hand_position_v2(self,map, motrice_position, nb_values):
+        closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(nb_values)] #tableau de (index, distance)
 
         closest_values.sort(key=lambda x: x[1])
 
         for index in range(nb_values, len(map)):
-            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_values[4][1]:
-                closest_values[4]=(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1]))
+            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_values[nb_values-1][1]:
+                closest_values[nb_values-1]=(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1]))
                 closest_values.sort(key=lambda x: x[1])
 
-        print('Liste des neuronnes les plus proches')
-        for i in range(5):
-            print(f"Indice: {closest_values[i][0]}; Coordonées: {map[closest_values[i][0]][0]}:{map[closest_values[i][0]][1]}; Distance: {closest_values[i][1]}")
+        result_x=0
+        result_y=0
 
-        x=0
-        y=0
+        for index in range(nb_values):
+            result_x+=map[closest_values[index][0]][2]
+            result_y+=map[closest_values[index][0]][3]
 
-        for index in range(5):
-            x+=map[index][2]
-            y+=map[index][3]
+        result_x/=nb_values
+        result_y/=nb_values        
 
-        x/=5
-        y/=5
+        return (result_x,result_y)
+    
+    def find_hand_position_v3(self,map, motrice_position, nb_values):
+        closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(nb_values)] #tableau de (index, distance)
 
-        return (x,y)
+        closest_values.sort(key=lambda x: x[1])
+
+        for index in range(nb_values, len(map)):
+            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_values[nb_values-1][1]:
+                closest_values[nb_values-1]=(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1]))
+                closest_values.sort(key=lambda x: x[1])
+
+        total_distance=sum(closest_values[i][1] for i in range(nb_values))
+    
+        result_x=0
+        result_y=0
+
+        for index in range(nb_values):
+            dist=(1-(closest_values[index][1]/total_distance))/(nb_values-1)
+            result_x+=map[closest_values[index][0]][2]*dist
+            result_y+=map[closest_values[index][0]][3]*dist     
+
+        return (result_x,result_y)
+    
+    def find_motrice_position_v1(self,map, hand_position):
+        closest_value=abs(map[0][2]-hand_position[0])+abs(map[0][3]-hand_position[1])
+        closest_index=0
+
+        for index in range(1, len(map)):
+            if abs(map[index][2]-hand_position[0])+abs(map[index][3]-hand_position[1])<closest_value:
+                closest_value=abs(map[index][2]-hand_position[0])+abs(map[index][3]-hand_position[1])
+                closest_index=index
+
+        return (map[closest_index][0],map[closest_index][1])
 
 
 # -----------------------------------------------------------------------------
@@ -388,15 +415,45 @@ if __name__ == '__main__':
     samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
     samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
 
-    motrice_test_position=(2,2)
+    motrice_test_position=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
 
-    print(f"Position idéale: {l1*numpy.cos(motrice_test_position[0])+l2*numpy.cos(motrice_test_position[0]+motrice_test_position[1])}:{l1*numpy.sin(motrice_test_position[0])+l2*numpy.sin(motrice_test_position[0]+motrice_test_position[1])}")
+    ideal=(l1*numpy.cos(motrice_test_position[0])+l2*numpy.cos(motrice_test_position[0]+motrice_test_position[1]),l1*numpy.sin(motrice_test_position[0])+l2*numpy.sin(motrice_test_position[0]+motrice_test_position[1]))
+    # print(f"Position idéale: {ideal[0]}:{ideal[1]}")
+    # print()
     
     result=network.find_hand_position_v1(samples,motrice_test_position)
-    print(f"Position calculé: {result[0]}:{result[1]}")
+    # print(f"Position calculé: {result[0]}:{result[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result[0])+abs(ideal[1]-result[1])}")
+    # print()
 
-    result2=network.find_hand_position_v2(samples,motrice_test_position)
-    print(f"Position calculé 2: {result2[0]}:{result2[1]}")
+    result2=network.find_hand_position_v2(samples,motrice_test_position,5)
+    # print(f"Position calculé 2: {result2[0]}:{result2[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])}")
+    # print()
+
+    result3=network.find_hand_position_v2(samples,motrice_test_position,3)
+    # print(f"Position calculé 3: {result3[0]}:{result3[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])}")
+    # print()
+
+    result4=network.find_hand_position_v3(samples,motrice_test_position,5)
+    # print(f"Position calculé 4: {result4[0]}:{result4[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])}")
+    # print()
+
+    result5=network.find_hand_position_v3(samples,motrice_test_position,3)
+    # print(f"Position calculé 5: {result5[0]}:{result5[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])}")
+    # print()
+
+    print(str(abs(ideal[0]-result[0])+abs(ideal[1]-result[1])).replace('.',',').replace('[','').replace(']',''))
+    print(str(abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])).replace('.',',').replace('[','').replace(']',''))
+    print(str(abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])).replace('.',',').replace('[','').replace(']',''))
+    print(str(abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])).replace('.',',').replace('[','').replace(']',''))
+    print(str(abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])).replace('.',',').replace('[','').replace(']',''))
+
+    # result6=network.find_motrice_position_v1(samples,result)
+    # print(f"Position calculé 6: {result6[0]}:{result6[1]}")
 
     # Affichage des données (pour les ensembles 1, 2 et 3)
     # plt.figure()
@@ -410,8 +467,10 @@ if __name__ == '__main__':
     plt.figure()
     plt.subplot(1,2,1)
     plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='k')
+    plt.scatter(motrice_test_position[0],motrice_test_position[1],c='red')
     plt.subplot(1,2,2)
     plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='k')
+    plt.scatter(result[0],result[1],c='red')
     plt.suptitle('Donnees apprentissage')
     plt.show()
 
