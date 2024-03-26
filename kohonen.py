@@ -337,7 +337,7 @@ class SOM:
 
         return (map[closest_index][0],map[closest_index][1])
     
-    def mouvement(self,map, from_pos,to_pos,nb_steps):
+    def mouvement_v1(self,map, from_pos,to_pos,nb_steps):
         hand_steps=[]
         for index in range(nb_steps-1):
             x=(from_pos[0]+(index/(nb_steps-1))*(to_pos[0]-from_pos[0]))
@@ -347,6 +347,34 @@ class SOM:
 
 
         pos_hand=self.find_hand_position_v1(map,(to_pos[0],to_pos[1]))
+        hand_steps.append((to_pos[0],to_pos[1],pos_hand[0],pos_hand[1]))
+        
+        return hand_steps
+    
+    def mouvement_v2(self,map, from_pos,to_pos,nb_steps):
+        hand_steps=[]
+        for index in range(nb_steps-1):
+            x=(from_pos[0]+(index/(nb_steps-1))*(to_pos[0]-from_pos[0]))
+            y=(from_pos[1]+(index/(nb_steps-1))*(to_pos[1]-from_pos[1]))
+            pos_hand=self.find_hand_position_v2(map,(x,y),3)
+            hand_steps.append((x,y,pos_hand[0],pos_hand[1]))
+
+
+        pos_hand=self.find_hand_position_v2(map,(to_pos[0],to_pos[1]),3)
+        hand_steps.append((to_pos[0],to_pos[1],pos_hand[0],pos_hand[1]))
+        
+        return hand_steps
+    
+    def mouvement_v3(self,map, from_pos,to_pos,nb_steps):
+        hand_steps=[]
+        for index in range(nb_steps-1):
+            x=(from_pos[0]+(index/(nb_steps-1))*(to_pos[0]-from_pos[0]))
+            y=(from_pos[1]+(index/(nb_steps-1))*(to_pos[1]-from_pos[1]))
+            pos_hand=self.find_hand_position_v3(map,(x,y),3)
+            hand_steps.append((x,y,pos_hand[0],pos_hand[1]))
+
+
+        pos_hand=self.find_hand_position_v3(map,(to_pos[0],to_pos[1]),3)
         hand_steps.append((to_pos[0],to_pos[1],pos_hand[0],pos_hand[1]))
         
         return hand_steps
@@ -466,9 +494,14 @@ if __name__ == '__main__':
     print(str(abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])).replace('.',',').replace('[','').replace(']',''))
     print(str(abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])).replace('.',',').replace('[','').replace(']',''))
 
-    result6=network.mouvement(samples,(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi),(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi),10)
+    begin=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
+    end=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
 
-    result7=network.mouvement(samples,(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi),(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi),10)
+    result6=network.mouvement_v1(samples,begin,end,10)
+
+    result7=network.mouvement_v2(samples,begin,end,10)
+
+    result8=network.mouvement_v3(samples,begin,end,10)
 
     # result6=network.find_motrice_position_v1(samples,result)
     # print(f"Position calculé 6: {result6[0]}:{result6[1]}")
@@ -486,21 +519,21 @@ if __name__ == '__main__':
     plt.subplot(1,2,1)
     plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
     plt.scatter(motrice_test_position[0],motrice_test_position[1],c='red')
-    x_values = [point[0] for point in result6]
-    y_values = [point[1] for point in result6]
-    plt.scatter(x_values,y_values,c='cyan')
     x_values = [point[0] for point in result7]
     y_values = [point[1] for point in result7]
-    plt.scatter(x_values,y_values,c='lime')
+    plt.plot(x_values,y_values,c='cyan')
     plt.subplot(1,2,2)
     plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
     plt.scatter(result[0],result[1],c='red')
     x_values = [point[2] for point in result6]
     y_values = [point[3] for point in result6]
-    plt.scatter(x_values,y_values,c='cyan')
+    plt.plot(x_values,y_values,c='violet')
     x_values = [point[2] for point in result7]
     y_values = [point[3] for point in result7]
-    plt.scatter(x_values,y_values,c='lime')
+    plt.plot(x_values,y_values,c='lime')
+    x_values = [point[2] for point in result8]
+    y_values = [point[3] for point in result8]
+    plt.plot(x_values,y_values,c='orange')
     plt.suptitle('Donnees apprentissage')
     plt.show()
 
