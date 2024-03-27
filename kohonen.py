@@ -497,11 +497,14 @@ if __name__ == '__main__':
     begin=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
     end=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
 
-    result6=network.mouvement_v1(samples,begin,end,10)
+    # begin=(0,0)
+    # end=(3,3)
 
-    result7=network.mouvement_v2(samples,begin,end,10)
+    result6=network.mouvement_v1(samples,begin,end,25)
 
-    result8=network.mouvement_v3(samples,begin,end,10)
+    result7=network.mouvement_v2(samples,begin,end,25)
+
+    result8=network.mouvement_v3(samples,begin,end,25)
 
     # result6=network.find_motrice_position_v1(samples,result)
     # print(f"Position calculé 6: {result6[0]}:{result6[1]}")
@@ -516,24 +519,33 @@ if __name__ == '__main__':
 
     # Affichage des données (pour l'ensemble robotique)
     plt.figure()
+
     plt.subplot(1,2,1)
     plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
-    plt.scatter(motrice_test_position[0],motrice_test_position[1],c='red')
+    plt.scatter(motrice_test_position[0],motrice_test_position[1],c='black')
     x_values = [point[0] for point in result7]
     y_values = [point[1] for point in result7]
-    plt.plot(x_values,y_values,c='cyan')
+    plt.plot(x_values,y_values,c='black')
+
     plt.subplot(1,2,2)
     plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
-    plt.scatter(result[0],result[1],c='red')
+
+    plt.scatter(result[0],result[1],c='blue')
+    plt.scatter(result3[0],result3[1],c='green')
+    plt.scatter(result5[0],result5[1],c='red')
+
     x_values = [point[2] for point in result6]
     y_values = [point[3] for point in result6]
-    plt.plot(x_values,y_values,c='violet')
+    plt.plot(x_values,y_values,c='blue')
+
     x_values = [point[2] for point in result7]
     y_values = [point[3] for point in result7]
-    plt.plot(x_values,y_values,c='lime')
+    plt.plot(x_values,y_values,c='green')
+
     x_values = [point[2] for point in result8]
     y_values = [point[3] for point in result8]
-    plt.plot(x_values,y_values,c='orange')
+    plt.plot(x_values,y_values,c='red')
+
     plt.suptitle('Donnees apprentissage')
     plt.show()
 
