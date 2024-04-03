@@ -85,7 +85,7 @@ class SOM:
         self.gridsize = gridsize
         # Création de la carte
         # Carte de neurones
-        map = []
+        self.map = []
         # Carte des poids
         self.weightsmap = []
         # Carte des activités
@@ -99,7 +99,7 @@ class SOM:
                 mline.append(neuron)
                 wmline.append(neuron.weights)
                 amline.append(neuron.y)
-            map.append(mline)
+            self.map.append(mline)
             self.weightsmap.append(wmline)
             self.activitymap.append(amline)
         self.activitymap = numpy.array(self.activitymap)
@@ -271,16 +271,23 @@ class SOM:
                 self.map[posx][posy].weights[1] - self.map[posx][posy + 1].weights[1]) ** 2
         return distance
     
-    def find_hand_position_v1(self, map, motrice_position):
-        closest_value=abs(map[0][0]-motrice_position[0])+abs(map[0][1]-motrice_position[1])
-        closest_index=0
 
-        for index in range(1, len(map)):
-            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_value:
-                closest_value=abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])
-                closest_index=index
-        # print(f"Plus proche: {map[closest_index][0]}:{map[closest_index][1]}")
-        return (map[closest_index][2],map[closest_index][3])
+    
+    def find_hand_position_v1(self, map, motrice_position):
+        closest_value=abs(map[0][0].weights[0]-motrice_position[0])+abs(map[0][0].weights[1]-motrice_position[1])
+        closest_index=(0,0)
+
+        for i in range(1, len(map)):
+            for j in range(len(map[i])):
+                if pow(pow((map[i][j].weights[0]-motrice_position[0]),2)+pow((map[i][j].weights[1]-motrice_position[1]),2),0.5)<closest_value:
+                    closest_value=pow(pow((map[i][j].weights[0]-motrice_position[0]),2)+pow((map[i][j].weights[1]-motrice_position[1]),2),0.5)
+                    closest_index=(i,j)
+
+        print(f"Neuronne le plus proche: {closest_index[0]}:{closest_index[1]}")
+        print(f"Position du neuronne le plus proche: {map[closest_index[0]][closest_index[1]].weights[0]}:{map[closest_index[0]][closest_index[1]].weights[1]}")
+        print(f"Position de la main estimé {map[closest_index[0]][closest_index[1]].weights[2]}:{map[closest_index[0]][closest_index[1]].weights[3]}")
+
+        return (map[closest_index[0]][closest_index[1]].weights[0],map[closest_index[0]][closest_index[1]].weights[1],map[closest_index[0]][closest_index[1]].weights[2],map[closest_index[0]][closest_index[1]].weights[3])
 
     def find_hand_position_v2(self, map, motrice_position, nb_values):
         closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(nb_values)] #tableau de (index, distance)
@@ -388,7 +395,7 @@ if __name__ == '__main__':
 
     # Création d'un réseau avec une entrée (2,1) et une carte (10,10)
     # TODO mettre à jour la taille des données d'entrée pour les données robotiques
-    network = SOM((2, 1), (10, 10))
+    network = SOM((2, 2), (10, 10))
     # PARAMÈTRES DU RÉSEAU
     # Taux d'apprentissage
     ETA = 0.05 # Par défaut à 0.05
@@ -458,53 +465,11 @@ if __name__ == '__main__':
     samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
 
     motrice_test_position=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
+    print(f"Position motrice: {motrice_test_position[0]}:{motrice_test_position[1]}")
 
     ideal=(l1*numpy.cos(motrice_test_position[0])+l2*numpy.cos(motrice_test_position[0]+motrice_test_position[1]),l1*numpy.sin(motrice_test_position[0])+l2*numpy.sin(motrice_test_position[0]+motrice_test_position[1]))
     # print(f"Position idéale: {ideal[0]}:{ideal[1]}")
     # print()
-    
-    result=network.find_hand_position_v1(samples, motrice_test_position)
-    # print(f"Position calculé: {result[0]}:{result[1]}")
-    # print(f"Distance à l'idéal: {abs(ideal[0]-result[0])+abs(ideal[1]-result[1])}")
-    # print()
-
-    result2=network.find_hand_position_v2(samples, motrice_test_position,5)
-    # print(f"Position calculé 2: {result2[0]}:{result2[1]}")
-    # print(f"Distance à l'idéal: {abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])}")
-    # print()
-
-    result3=network.find_hand_position_v2(samples, motrice_test_position,3)
-    # print(f"Position calculé 3: {result3[0]}:{result3[1]}")
-    # print(f"Distance à l'idéal: {abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])}")
-    # print()
-
-    result4=network.find_hand_position_v3(samples, motrice_test_position,5)
-    # print(f"Position calculé 4: {result4[0]}:{result4[1]}")
-    # print(f"Distance à l'idéal: {abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])}")
-    # print()
-
-    result5=network.find_hand_position_v3(samples, motrice_test_position,3)
-    # print(f"Position calculé 5: {result5[0]}:{result5[1]}")
-    # print(f"Distance à l'idéal: {abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])}")
-    # print()
-
-    print(str(abs(ideal[0]-result[0])+abs(ideal[1]-result[1])).replace('.',',').replace('[','').replace(']',''))
-    print(str(abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])).replace('.',',').replace('[','').replace(']',''))
-    print(str(abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])).replace('.',',').replace('[','').replace(']',''))
-    print(str(abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])).replace('.',',').replace('[','').replace(']',''))
-    print(str(abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])).replace('.',',').replace('[','').replace(']',''))
-
-    begin=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
-    end=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
-
-    # begin=(0,0)
-    # end=(3,3)
-
-    result6=network.mouvement_v1(samples,begin,end,25)
-
-    result7=network.mouvement_v2(samples,begin,end,25)
-
-    result8=network.mouvement_v3(samples,begin,end,25)
 
     # result6=network.find_motrice_position_v1(samples,result)
     # print(f"Position calculé 6: {result6[0]}:{result6[1]}")
@@ -517,37 +482,6 @@ if __name__ == '__main__':
     # plt.suptitle('Donnees apprentissage')
     # plt.show()
 
-    # Affichage des données (pour l'ensemble robotique)
-    plt.figure()
-
-    plt.subplot(1,2,1)
-    plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
-    plt.scatter(motrice_test_position[0],motrice_test_position[1],c='black')
-    x_values = [point[0] for point in result7]
-    y_values = [point[1] for point in result7]
-    plt.plot(x_values,y_values,c='black')
-
-    plt.subplot(1,2,2)
-    plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
-
-    plt.scatter(result[0],result[1],c='blue')
-    plt.scatter(result3[0],result3[1],c='green')
-    plt.scatter(result5[0],result5[1],c='red')
-
-    x_values = [point[2] for point in result6]
-    y_values = [point[3] for point in result6]
-    plt.plot(x_values,y_values,c='blue')
-
-    x_values = [point[2] for point in result7]
-    y_values = [point[3] for point in result7]
-    plt.plot(x_values,y_values,c='green')
-
-    x_values = [point[2] for point in result8]
-    y_values = [point[3] for point in result8]
-    plt.plot(x_values,y_values,c='red')
-
-    plt.suptitle('Donnees apprentissage')
-    plt.show()
 
     # SIMULATION
     # Affichage des poids du réseau
@@ -575,7 +509,7 @@ if __name__ == '__main__':
             plt.clf()
             # Remplissage de la figure
             # TODO à remplacer par scatter_plot_2 pour les données robotiques
-            network.scatter_plot(True)
+            network.scatter_plot_2(True)
             # Affichage du contenu de la figure
             plt.pause(0.00001)
             plt.draw()
@@ -583,9 +517,96 @@ if __name__ == '__main__':
     # Fin de l'affichage interactif
     if VERBOSE:
         # Désactivation du mode interactif
+        result=network.find_hand_position_v1(network.map, motrice_test_position)
+        plt.subplot(1, 2, 1)
+        plt.scatter(motrice_test_position[0],motrice_test_position[1],c='blue')
+        plt.scatter(result[0],result[1],c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(result[2],result[3],c='red')
+        plt.scatter(ideal[0],ideal[1],c='green')
         plt.ioff()
     # Affichage des poids du réseau
     network.plot()
+
+
+
+    print(f"Position idéale: {ideal[0]}:{ideal[1]}")
+    
+
+    # print(f"Position calculé: {result[0]}:{result[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result[0])+abs(ideal[1]-result[1])}")
+    # print()
+
+    #result2=network.find_hand_position_v2(network.map, motrice_test_position,5)
+    # print(f"Position calculé 2: {result2[0]}:{result2[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])}")
+    # print()
+
+    #result3=network.find_hand_position_v2(network.map, motrice_test_position,3)
+    # print(f"Position calculé 3: {result3[0]}:{result3[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])}")
+    # print()
+
+    #result4=network.find_hand_position_v3(network.map, motrice_test_position,5)
+    # print(f"Position calculé 4: {result4[0]}:{result4[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])}")
+    # print()
+
+    #result5=network.find_hand_position_v3(network.map, motrice_test_position,3)
+    # print(f"Position calculé 5: {result5[0]}:{result5[1]}")
+    # print(f"Distance à l'idéal: {abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])}")
+    # print()
+
+    print(str(abs(ideal[0]-result[0])+abs(ideal[1]-result[1])).replace('.',',').replace('[','').replace(']',''))
+    # print(str(abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])).replace('.',',').replace('[','').replace(']',''))
+    # print(str(abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])).replace('.',',').replace('[','').replace(']',''))
+    # print(str(abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])).replace('.',',').replace('[','').replace(']',''))
+    # print(str(abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])).replace('.',',').replace('[','').replace(']',''))
+
+    # begin=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
+    # end=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
+
+    # begin=(0,0)
+    # end=(3,3)
+
+    # result6=network.mouvement_v1(network.map,begin,end,25)
+
+    # result7=network.mouvement_v2(network.map,begin,end,25)
+
+    # result8=network.mouvement_v3(network.map,begin,end,25)
+
+    # Affichage des données (pour l'ensemble robotique)
+    # plt.figure()
+
+    # plt.subplot(1,2,1)
+    # plt.scatter(network.map[:,0,0].flatten(),network.map[:,1,0].flatten(),c='lightgray',s=10)
+    # plt.scatter(motrice_test_position[0],motrice_test_position[1],c='black')
+    # x_values = [point[0] for point in result7]
+    # y_values = [point[1] for point in result7]
+    # plt.plot(x_values,y_values,c='black')
+
+    # plt.subplot(1,2,2)
+    # plt.scatter(network.map[:,2,0].flatten(),network.map[:,3,0].flatten(),c='lightgray',s=10)
+
+    # plt.scatter(result[0],result[1],c='blue')
+    # plt.scatter(result3[0],result3[1],c='green')
+    # plt.scatter(result5[0],result5[1],c='red')
+
+    # x_values = [point[2] for point in result6]
+    # y_values = [point[3] for point in result6]
+    # plt.plot(x_values,y_values,c='blue')
+
+    # x_values = [point[2] for point in result7]
+    # y_values = [point[3] for point in result7]
+    # plt.plot(x_values,y_values,c='green')
+
+    # x_values = [point[2] for point in result8]
+    # y_values = [point[3] for point in result8]
+    # plt.plot(x_values,y_values,c='red')
+
+    # plt.suptitle('Donnees apprentissage')
+    plt.show()
+
     # Affichage de l'erreur de quantification vectorielle moyenne après apprentissage
     print("erreur de quantification vectorielle moyenne ", network.MSE(samples))
     print("coef de relachement ", network.get_map_dispertion())
