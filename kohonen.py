@@ -168,7 +168,7 @@ class SOM:
     '''
         # Création de la figure
         if not interactive:
-            plt.figure()
+            plt.figure(figsize=(10, 5))
         # Affichage des 2 premières dimensions dans le plan
         plt.subplot(1, 2, 1)
         # Récupération des poids
@@ -274,75 +274,71 @@ class SOM:
 
     
     def find_hand_position_v1(self, map, motrice_position):
-        closest_value=abs(map[0][0].weights[0]-motrice_position[0])+abs(map[0][0].weights[1]-motrice_position[1])
+        closest_value=pow(pow(map[0][0].weights[0]-motrice_position[0],2)+pow(map[0][0].weights[1]-motrice_position[1],2),0.5)
         closest_index=(0,0)
 
-        for i in range(1, len(map)):
+        for i in range(len(map)):
             for j in range(len(map[i])):
                 if pow(pow((map[i][j].weights[0]-motrice_position[0]),2)+pow((map[i][j].weights[1]-motrice_position[1]),2),0.5)<closest_value:
                     closest_value=pow(pow((map[i][j].weights[0]-motrice_position[0]),2)+pow((map[i][j].weights[1]-motrice_position[1]),2),0.5)
                     closest_index=(i,j)
 
-        print(f"Neuronne le plus proche: {closest_index[0]}:{closest_index[1]}")
-        print(f"Position du neuronne le plus proche: {map[closest_index[0]][closest_index[1]].weights[0]}:{map[closest_index[0]][closest_index[1]].weights[1]}")
-        print(f"Position de la main estimé {map[closest_index[0]][closest_index[1]].weights[2]}:{map[closest_index[0]][closest_index[1]].weights[3]}")
+        return ((map[closest_index[0]][closest_index[1]].weights[0],map[closest_index[0]][closest_index[1]].weights[1]),(map[closest_index[0]][closest_index[1]].weights[2],map[closest_index[0]][closest_index[1]].weights[3]))
 
-        return (map[closest_index[0]][closest_index[1]].weights[0],map[closest_index[0]][closest_index[1]].weights[1],map[closest_index[0]][closest_index[1]].weights[2],map[closest_index[0]][closest_index[1]].weights[3])
+
 
     def find_hand_position_v2(self, map, motrice_position, nb_values):
-        closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(nb_values)] #tableau de (index, distance)
+        closest_values=[]
 
-        closest_values.sort(key=lambda x: x[1])
-
-        for index in range(nb_values, len(map)):
-            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_values[nb_values-1][1]:
-                closest_values[nb_values-1]=(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1]))
-                closest_values.sort(key=lambda x: x[1])
+        for i in range(len(map)):
+            for j  in range(len(map[i])):
+                if len(closest_values)<nb_values:
+                    closest_values.append(((i,j),pow(pow(map[i][j].weights[0]-motrice_position[0],2)+pow(map[i][j].weights[1]-motrice_position[1],2),0.5)))
+                    closest_values.sort(key=lambda x: x[1])
+                elif pow(pow(map[i][j].weights[0]-motrice_position[0],2)+pow(map[i][j].weights[1]-motrice_position[1],2),0.5)<closest_values[nb_values-1][1]:
+                    closest_values[nb_values-1]=((i,j),pow(pow(map[i][j].weights[0]-motrice_position[0],2)+pow(map[i][j].weights[1]-motrice_position[1],2),0.5))
+                    closest_values.sort(key=lambda x: x[1])
 
         result_x=0
         result_y=0
 
-        for index in range(nb_values):
-            result_x+=map[closest_values[index][0]][2]
-            result_y+=map[closest_values[index][0]][3]
+        for i in range(nb_values):
+            result_x+=map[closest_values[i][0][0]][closest_values[i][0][1]].weights[2]
+            result_y+=map[closest_values[i][0][0]][closest_values[i][0][1]].weights[3]
 
         result_x/=nb_values
         result_y/=nb_values        
 
-        return (result_x,result_y)
+        return ([closest_values[i][0] for i in range(nb_values)],(result_x,result_y))
+    
+
     
     def find_hand_position_v3(self, map, motrice_position, nb_values):
-        closest_values=[(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])) for index in range(nb_values)] #tableau de (index, distance)
+        closest_values=[]
 
-        closest_values.sort(key=lambda x: x[1])
+        for i in range(len(map)):
+            for j  in range(len(map[i])):
+                if len(closest_values)<nb_values:
+                    closest_values.append(((i,j),pow(pow(map[i][j].weights[0]-motrice_position[0],2)+pow(map[i][j].weights[1]-motrice_position[1],2),0.5)))
+                    closest_values.sort(key=lambda x: x[1])
+                elif pow(pow(map[i][j].weights[0]-motrice_position[0],2)+pow(map[i][j].weights[1]-motrice_position[1],2),0.5)<closest_values[nb_values-1][1]:
+                    closest_values[nb_values-1]=((i,j),pow(pow(map[i][j].weights[0]-motrice_position[0],2)+pow(map[i][j].weights[1]-motrice_position[1],2),0.5))
+                    closest_values.sort(key=lambda x: x[1])
 
-        for index in range(nb_values, len(map)):
-            if abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1])<closest_values[nb_values-1][1]:
-                closest_values[nb_values-1]=(index,abs(map[index][0]-motrice_position[0])+abs(map[index][1]-motrice_position[1]))
-                closest_values.sort(key=lambda x: x[1])
 
         total_distance=sum(closest_values[i][1] for i in range(nb_values))
     
         result_x=0
         result_y=0
 
-        for index in range(nb_values):
-            dist=(1-(closest_values[index][1]/total_distance))/(nb_values-1)
-            result_x+=map[closest_values[index][0]][2]*dist
-            result_y+=map[closest_values[index][0]][3]*dist     
+        for i in range(nb_values):
+            dist=(1-(closest_values[i][1]/total_distance))/(nb_values-1)
+            result_x+=map[closest_values[i][0][0]][closest_values[i][0][1]].weights[2]*dist
+            result_y+=map[closest_values[i][0][0]][closest_values[i][0][1]].weights[3]*dist
 
-        return (result_x,result_y)
+        return ([closest_values[i][0] for i in range(nb_values)],(result_x,result_y))
     
-    def find_motrice_position_v1(self, map, hand_position):
-        closest_value=abs(map[0][2]-hand_position[0])+abs(map[0][3]-hand_position[1])
-        closest_index=0
 
-        for index in range(1, len(map)):
-            if abs(map[index][2]-hand_position[0])+abs(map[index][3]-hand_position[1])<closest_value:
-                closest_value=abs(map[index][2]-hand_position[0])+abs(map[index][3]-hand_position[1])
-                closest_index=index
-
-        return (map[closest_index][0],map[closest_index][1])
     
     def mouvement_v1(self,map, from_pos,to_pos,nb_steps):
         hand_steps=[]
@@ -350,11 +346,11 @@ class SOM:
             x=(from_pos[0]+(index/(nb_steps-1))*(to_pos[0]-from_pos[0]))
             y=(from_pos[1]+(index/(nb_steps-1))*(to_pos[1]-from_pos[1]))
             pos_hand=self.find_hand_position_v1(map,(x,y))
-            hand_steps.append((x,y,pos_hand[0],pos_hand[1]))
+            hand_steps.append((pos_hand[0],pos_hand[1]))
 
 
         pos_hand=self.find_hand_position_v1(map,(to_pos[0],to_pos[1]))
-        hand_steps.append((to_pos[0],to_pos[1],pos_hand[0],pos_hand[1]))
+        hand_steps.append((pos_hand[0],pos_hand[1]))
         
         return hand_steps
     
@@ -363,12 +359,12 @@ class SOM:
         for index in range(nb_steps-1):
             x=(from_pos[0]+(index/(nb_steps-1))*(to_pos[0]-from_pos[0]))
             y=(from_pos[1]+(index/(nb_steps-1))*(to_pos[1]-from_pos[1]))
-            pos_hand=self.find_hand_position_v2(map,(x,y),3)
-            hand_steps.append((x,y,pos_hand[0],pos_hand[1]))
+            pos_hand=self.find_hand_position_v2(map,(x,y),4)
+            hand_steps.append((pos_hand[0],pos_hand[1]))
 
 
         pos_hand=self.find_hand_position_v2(map,(to_pos[0],to_pos[1]),3)
-        hand_steps.append((to_pos[0],to_pos[1],pos_hand[0],pos_hand[1]))
+        hand_steps.append((pos_hand[0],pos_hand[1]))
         
         return hand_steps
     
@@ -377,12 +373,12 @@ class SOM:
         for index in range(nb_steps-1):
             x=(from_pos[0]+(index/(nb_steps-1))*(to_pos[0]-from_pos[0]))
             y=(from_pos[1]+(index/(nb_steps-1))*(to_pos[1]-from_pos[1]))
-            pos_hand=self.find_hand_position_v3(map,(x,y),3)
-            hand_steps.append((x,y,pos_hand[0],pos_hand[1]))
+            pos_hand=self.find_hand_position_v3(map,(x,y),4)
+            hand_steps.append((pos_hand[0],pos_hand[1]))
 
 
         pos_hand=self.find_hand_position_v3(map,(to_pos[0],to_pos[1]),3)
-        hand_steps.append((to_pos[0],to_pos[1],pos_hand[0],pos_hand[1]))
+        hand_steps.append((pos_hand[0],pos_hand[1]))
         
         return hand_steps
 
@@ -398,9 +394,9 @@ if __name__ == '__main__':
     network = SOM((2, 2), (10, 10))
     # PARAMÈTRES DU RÉSEAU
     # Taux d'apprentissage
-    ETA = 0.05 # Par défaut à 0.05
+    ETA = 0.1 # Par défaut à 0.05
     # Largeur du voisinage
-    SIGMA = 1.4 # Par défaut à 1.4
+    SIGMA = 0.9 # Par défaut à 1.4
     # Nombre de pas de temps d'apprentissage
     N = 30000 # Par défaut à 30000
     # Affichage interactif de l'évolution du réseau
@@ -464,15 +460,13 @@ if __name__ == '__main__':
     samples[:,2,:] = l1*numpy.cos(samples[:,0,:])+l2*numpy.cos(samples[:,0,:]+samples[:,1,:])
     samples[:,3,:] = l1*numpy.sin(samples[:,0,:])+l2*numpy.sin(samples[:,0,:]+samples[:,1,:])
 
-    motrice_test_position=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
+    motrice_test_position=(numpy.random.rand()*2.5+0.5,numpy.random.rand()*2.5+0.5)
     print(f"Position motrice: {motrice_test_position[0]}:{motrice_test_position[1]}")
 
     ideal=(l1*numpy.cos(motrice_test_position[0])+l2*numpy.cos(motrice_test_position[0]+motrice_test_position[1]),l1*numpy.sin(motrice_test_position[0])+l2*numpy.sin(motrice_test_position[0]+motrice_test_position[1]))
     # print(f"Position idéale: {ideal[0]}:{ideal[1]}")
     # print()
 
-    # result6=network.find_motrice_position_v1(samples,result)
-    # print(f"Position calculé 6: {result6[0]}:{result6[1]}")
 
     # Affichage des données (pour les ensembles 1, 2 et 3)
     # plt.figure()
@@ -489,7 +483,7 @@ if __name__ == '__main__':
     # Initialisation de l'affichage interactif
     if VERBOSE:
         # Création d'une figure
-        plt.figure()
+        plt.figure(figsize=(10, 5))
         # Mode interactif
         plt.ion()
         # Affichage de la figure
@@ -516,28 +510,161 @@ if __name__ == '__main__':
             plt.savefig("generatedImage/" + str(i) + ".png")
     # Fin de l'affichage interactif
     if VERBOSE:
+    
         # Désactivation du mode interactif
         result=network.find_hand_position_v1(network.map, motrice_test_position)
+
         plt.subplot(1, 2, 1)
-        plt.scatter(motrice_test_position[0],motrice_test_position[1],c='blue')
-        plt.scatter(result[0],result[1],c='red')
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.scatter(motrice_test_position[0],motrice_test_position[1],c='green')
+        plt.scatter(result[0][0],result[0][1],c='red')
         plt.subplot(1, 2, 2)
-        plt.scatter(result[2],result[3],c='red')
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
         plt.scatter(ideal[0],ideal[1],c='green')
+        plt.scatter(result[1][0],result[1][1],c='red')
+        plt.suptitle('Réultat avec la méthode v1')
+        plt.savefig("generatedImage/figure1.png")
+        plt.draw()
+        plt.pause(2)
+
+        
+        result2=network.find_hand_position_v2(network.map, motrice_test_position,4)
+
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.scatter(motrice_test_position[0],motrice_test_position[1],c='green')
+        for i in range(4):
+            plt.scatter(network.map[result2[0][i][0]][result2[0][i][1]].weights[0],network.map[result2[0][i][0]][result2[0][i][1]].weights[1],c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.scatter(ideal[0],ideal[1],c='green')
+        plt.scatter(result2[1][0],result2[1][1],c='red')
+        plt.suptitle('Réultat avec la méthode v2')
+        plt.savefig("generatedImage/figure2.png")
+        plt.draw()
+        plt.pause(2)
+
+
+        result3=network.find_hand_position_v3(network.map, motrice_test_position,4)
+
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.scatter(motrice_test_position[0],motrice_test_position[1],c='green')
+        for i in range(4):
+            plt.scatter(network.map[result3[0][i][0]][result3[0][i][1]].weights[0],network.map[result3[0][i][0]][result3[0][i][1]].weights[1],c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.scatter(ideal[0],ideal[1],c='green')
+        plt.scatter(result3[1][0],result3[1][1],c='red')
+        plt.suptitle('Réultat avec la méthode v3')
+        plt.savefig("generatedImage/figure3.png")
+        plt.draw()
+        plt.pause(2)
+
+        
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.scatter(motrice_test_position[0],motrice_test_position[1],c='green')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.scatter(ideal[0],ideal[1],c='green')
+        plt.scatter(result[1][0],result[1][1],c='red')
+        plt.scatter(result2[1][0],result2[1][1],c='blue')
+        plt.scatter(result3[1][0],result3[1][1],c='gold')
+        plt.suptitle('Réultat avec les différents méthodes')
+        plt.savefig("generatedImage/figure4.png")
+        plt.draw()
+        plt.pause(2)
+
+
+        #pos1=(numpy.random.rand()*2.5+0.5,numpy.random.rand()*2.5+0.5)
+        #pos2=(numpy.random.rand()*2.5+0.5,numpy.random.rand()*2.5+0.5)
+        pos1=(1,1)
+        pos2=(2.5,2.5)
+        result4=network.mouvement_v1(network.map, pos1,pos2,10)
+
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.plot((pos1[0],pos2[0]),(pos1[1],pos2[1]),c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.plot([point[1][0] for point in result4],[point[1][1] for point in result4],c="red")
+        plt.suptitle('Réultat avec la méthode v1')
+        plt.savefig("generatedImage/figure5.png")
+        plt.draw()
+        plt.pause(2)
+
+
+        result5=network.mouvement_v2(network.map, pos1,pos2,10)
+
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.plot((pos1[0],pos2[0]),(pos1[1],pos2[1]),c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.plot([point[1][0] for point in result5],[point[1][1] for point in result5],c="red")
+        plt.suptitle('Réultat avec la méthode v2')
+        plt.savefig("generatedImage/figure6.png")
+        plt.draw()
+        plt.pause(2)
+        
+        
+        result6=network.mouvement_v3(network.map, pos1,pos2,10)
+
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.plot((pos1[0],pos2[0]),(pos1[1],pos2[1]),c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.plot([point[1][0] for point in result6],[point[1][1] for point in result6],c="red")
+        plt.suptitle('Réultat avec la méthode v3')
+        plt.savefig("generatedImage/figure7.png")
+        plt.draw()
+        plt.pause(2)
+
+        plt.clf()
+        network.scatter_plot_2(True)
+        plt.subplot(1, 2, 1)
+        plt.scatter(samples[:,0,0].flatten(),samples[:,1,0].flatten(),c='lightgray',s=10)
+        plt.plot((pos1[0],pos2[0]),(pos1[1],pos2[1]),c='red')
+        plt.subplot(1, 2, 2)
+        plt.scatter(samples[:,2,0].flatten(),samples[:,3,0].flatten(),c='lightgray',s=10)
+        plt.plot([point[1][0] for point in result4],[point[1][1] for point in result4],c="red")
+        plt.plot([point[1][0] for point in result5],[point[1][1] for point in result5],c="blue")
+        plt.plot([point[1][0] for point in result6],[point[1][1] for point in result6],c="gold")
+        plt.suptitle('Réultat avec toutes les méthodes')
+        plt.savefig("generatedImage/figure8.png")
+        plt.draw()
+        plt.pause(2)
+
+
+        # Désactivation du mode interactif
         plt.ioff()
     # Affichage des poids du réseau
     network.plot()
 
 
 
-    print(f"Position idéale: {ideal[0]}:{ideal[1]}")
+    # print(f"Position idéale: {ideal[0]}:{ideal[1]}")
     
 
     # print(f"Position calculé: {result[0]}:{result[1]}")
     # print(f"Distance à l'idéal: {abs(ideal[0]-result[0])+abs(ideal[1]-result[1])}")
     # print()
 
-    #result2=network.find_hand_position_v2(network.map, motrice_test_position,5)
+    #
     # print(f"Position calculé 2: {result2[0]}:{result2[1]}")
     # print(f"Distance à l'idéal: {abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])}")
     # print()
@@ -557,11 +684,9 @@ if __name__ == '__main__':
     # print(f"Distance à l'idéal: {abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])}")
     # print()
 
-    print(str(abs(ideal[0]-result[0])+abs(ideal[1]-result[1])).replace('.',',').replace('[','').replace(']',''))
-    # print(str(abs(ideal[0]-result2[0])+abs(ideal[1]-result2[1])).replace('.',',').replace('[','').replace(']',''))
-    # print(str(abs(ideal[0]-result3[0])+abs(ideal[1]-result3[1])).replace('.',',').replace('[','').replace(']',''))
-    # print(str(abs(ideal[0]-result4[0])+abs(ideal[1]-result4[1])).replace('.',',').replace('[','').replace(']',''))
-    # print(str(abs(ideal[0]-result5[0])+abs(ideal[1]-result5[1])).replace('.',',').replace('[','').replace(']',''))
+    print(str(pow(pow(ideal[0]-result[1][0],2)+pow(ideal[1]-result[1][1],2),0.5)).replace('.',',').replace('[','').replace(']',''))
+    print(str(pow(pow(ideal[0]-result2[1][0],2)+pow(ideal[1]-result2[1][1],2),0.5)).replace('.',',').replace('[','').replace(']',''))
+    print(str(pow(pow(ideal[0]-result3[1][0],2)+pow(ideal[1]-result3[1][1],2),0.5)).replace('.',',').replace('[','').replace(']',''))
 
     # begin=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
     # end=(numpy.random.rand()*numpy.pi,numpy.random.rand()*numpy.pi)
@@ -605,7 +730,7 @@ if __name__ == '__main__':
     # plt.plot(x_values,y_values,c='red')
 
     # plt.suptitle('Donnees apprentissage')
-    plt.show()
+    #plt.show()
 
     # Affichage de l'erreur de quantification vectorielle moyenne après apprentissage
     print("erreur de quantification vectorielle moyenne ", network.MSE(samples))
